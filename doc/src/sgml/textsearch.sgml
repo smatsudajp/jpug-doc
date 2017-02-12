@@ -388,7 +388,7 @@ SELECT 'fat &amp; cow'::tsquery @@ 'a fat cat sat on a mat and ate a fat rat'::t
 -->
 上記の例でわかるように、<type>tsquery</type>は、<type>tsvector</type>と違って、単なるテキストではありません。
 <type>tsquery</type>は正規化済の語彙素である検索表現を含み、AND, OR, NOT, FOLLOWED BY演算子を使って複数の表現を組み合わせても構いません。
-(詳細は<xref linkend="datatype-tsquery">を見てください。)
+(構文の詳細は<xref linkend="datatype-tsquery">を見てください。)
 主にテキスト中の単語を正規化することにより、ユーザが入力したテキストを適切な<type>tsquery</type>に変換するのに便利な関数<function>to_tsquery</>、<function>plainto_tsquery</>、<function>phraseto_tsquery</>があります。
 同様に、文書文字列をパースして正規化するために<function>to_tsvector</>が利用できます。
 というわけで、実際にはテキスト検索照合はこんな感じになります。
@@ -464,7 +464,7 @@ text @@ text
 -->
 <type>tsquery</>内において、演算子 <literal>&amp;</literal> (AND) は、マッチと見なされるには引数の両方がドキュメント内に現れる必要があるということを指定します。
 同様に、演算子 <literal>|</literal> (OR) では、引数の少なくとも一方が現れる必要があり、また演算子 <literal>!</> (NOT) は、マッチと見なされるには引数が現れては<emphasis>ならない</>ことを指定します。
-★追加翻訳が必要
+例えば、問い合わせ<literal>fat &amp; ! rat</>は<literal>fat</>を含むが<literal>rat</>を含まない文書とマッチします。
    </para>
 
    <para>
@@ -540,6 +540,7 @@ SELECT phraseto_tsquery('the cats ate the rats');
    </para>
 
    <para>
+<!--
     It's worth noticing that the AND/OR/NOT operators mean something subtly
     different when they are within the arguments of a FOLLOWED BY operator
     than when they are not, because within FOLLOWED BY the exact position of
@@ -559,6 +560,17 @@ SELECT phraseto_tsquery('the cats ate the rats');
     since <literal>x</> and <literal>y</> could not match at the same place;
     but with more complex situations such as prefix-match patterns, a query
     of this form could be useful.)
+-->
+AND/OR/NOT演算子がFOLLOWED BY演算子の引数の中にあるときとそうでないときで、微妙に意味が違うことは重要です。
+なぜなら、FOLLOWED BYの中ではマッチの正確な位置が意味を持つからです。
+例えば、<literal>!x</>は通常なら<literal>x</>をどこにも含まない文書とマッチします。
+しかし<literal>!x &lt;-&gt; y</>は<literal>x</>の直後にはない<literal>y</>とマッチし、文書内の他の場所に<literal>x</>があってもマッチの妨げにはなりません。
+別の例をあげると、<literal>x &amp; y</>は通常なら文書内のどこかに<literal>x</>と<literal>y</>の両方があるだけしか必要としませんが、<literal>(x &amp; y) &lt;-&gt; z</>は<literal>x</>と<literal>y</>が同じ場所で<literal>z</>の直前にあることを必要とします。
+従って、この問い合わせは<literal>x &lt;-&gt; z &amp; y &lt;-&gt; z</>とは異なる動作をします。
+後者は２つの別々のつながり<literal>x z</>と<literal>y z</>の両方が含まれる文書とマッチします。
+（前者の問い合わせは、この通りに記述したら全く役に立たないものです。
+なぜなら<literal>x</>と<literal>y</>が同じ場所でマッチすることはありえないからです。
+しかし、接頭辞によるマッチのパターンなどもっと複雑な状況では、この形式の問い合わせが役に立つかもしれません。）
    </para>
   </sect2>
 
@@ -1782,7 +1794,7 @@ query.',
     <type>tsvector</type> summary, so it can be slow and should be used with
     care.
 -->
-<function>ts_headline</>は、<type>tsvector</type>の要約ではなく、元の文書を使います。ですので遅い可能性があり、注意深く使用する必要があります。よくある間違いは、たった10個の文書を表示しようとしているのに、<emphasis>すべての</emphasis>合致した文書に<function>ts_headline</function>を適用することです。<acronym>SQL</acronym>の副問い合わせがこのときに役に立ちます。例を示します。 ★変更あり
+<function>ts_headline</>は、<type>tsvector</type>の要約ではなく、元の文書を使います。ですので遅い可能性があり、注意深く使用する必要があります。
    </para>
 
   </sect2>
